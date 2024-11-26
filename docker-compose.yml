@@ -14,8 +14,10 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
 
   shopware:
-    image: osioaliu/dockware_dev:latest
+    image: osioaliu/dockware-dev
     container_name: ${NAMESPACE}_shopware
+    build:
+      context: ./.docker/php
     env_file: .env
     user: ${UID_GID}
     ports:
@@ -26,13 +28,13 @@ services:
       - "9998:9998" # watch storefront proxy
       - "9999:9999" # watch storefront
       - "3306:3306" # mysql port
-    entrypoint: [ "fixuid","docker-php-entrypoint" ]
+    entrypoint: [ "fixuid", "/bin/bash", "/entrypoint.sh"]
     environment:
       - XDEBUG_ENABLED=${XDEBUG_ENABLED}
       - PHP_VERSION=${PHP_VERSION}
     volumes:
       - db_volume:/var/lib/mysql
-      - shop_volume:/var/www/html
+      - shop_volume:/var/www/html:delegated
 
 volumes:
   rabbitmq_data:
