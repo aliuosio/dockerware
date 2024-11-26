@@ -16,8 +16,8 @@ services:
   shopware:
     image: osioaliu/dockware-dev
     container_name: ${NAMESPACE}_shopware
-    build:
-      context: ./.docker/php
+    # build:
+    #  context: ./.docker/php
     env_file: .env
     user: ${UID_GID}
     ports:
