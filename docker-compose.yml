@@ -1,0 +1,50 @@
+services:
+
+  rabbitmq:
+    container_name: ${NAMESPACE}_rabbitmq
+    image: rabbitmq:${RABBITMQ_VERSION}
+    env_file: .env
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  shopware:
+    image: osioaliu/dockware_dev:latest
+    container_name: ${NAMESPACE}_shopware
+    env_file: .env
+    user: ${UID_GID}
+    ports:
+      - "22:22"     # ssh
+      - "80:80"     # apache2
+      - "443:443"   # apache2 https
+      - "8888:8888" # watch admin
+      - "9998:9998" # watch storefront proxy
+      - "9999:9999" # watch storefront
+      - "3306:3306" # mysql port
+    entrypoint: [ "fixuid","docker-php-entrypoint" ]
+    environment:
+      - XDEBUG_ENABLED=${XDEBUG_ENABLED}
+      - PHP_VERSION=${PHP_VERSION}
+    volumes:
+      - db_volume:/var/lib/mysql
+      - shop_volume:/var/www/html
+
+volumes:
+  rabbitmq_data:
+  db_volume:
+  shop_volume:
+    driver_opts:
+      type: none
+      o: bind
+      device: ${WORKDIR}
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${NETWORK_SUBNET}
