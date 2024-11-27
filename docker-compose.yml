@@ -34,7 +34,7 @@ services:
       - PHP_VERSION=${PHP_VERSION}
     volumes:
       - db_volume:/var/lib/mysql
-      - composer_cache:/home/www-data/.composer:delegated
+      - composer_cache:/var/www/.composer:delegated
       - shop_volume:/var/www/html:delegated
 
 volumes:
