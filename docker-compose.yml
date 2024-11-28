@@ -16,10 +16,15 @@ services:
   shopware:
     image: osioaliu/dockware-dev
     container_name: ${NAMESPACE}_shopware
-    # build:
-    #  context: ./.docker/php
+    build:
+      context: ./.docker/php
     env_file: .env
     user: ${UID_GID}
+    depends_on:
+      redis_session:
+        condition: service_healthy
+      redis_cache:
+        condition: service_healthy
     ports:
       - "22:22"     # ssh
       - "80:80"     # apache2
@@ -37,9 +42,47 @@ services:
       - composer_cache:/var/www/.composer:delegated
       - shop_volume:/var/www/html:delegated
 
+  redis_cache:
+    container_name: ${NAMESPACE}_redis_cache
+    image: redis:${REDIS_VERSION}
+    sysctls:
+      net.core.somaxconn: '1024'
+    entrypoint: redis-server
+    ports:
+      - "6379:6379"
+    command: [ "/etc/redis/redis.conf", "--appendonly", "yes" ]
+    healthcheck:
+      test: 'redis-cli ping || exit 1'
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - redis_socket_cache:/run/redis/
+      - ./.docker/redis/redis.conf:/etc/redis/redis.conf:ro
+
+  redis_session:
+    container_name: ${NAMESPACE}_redis_session
+    image: redis:${REDIS_VERSION}
+    sysctls:
+      net.core.somaxconn: '1024'
+    entrypoint: redis-server
+    ports:
+      - "6378:6379"
+    command: [ "/etc/redis/redis.conf", "--appendonly", "yes" ]
+    healthcheck:
+      test: 'redis-cli ping || exit 1'
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - redis_socket_session:/run/redis/
+      - ./.docker/redis/redis.conf:/etc/redis/redis.conf:ro
+
 volumes:
   rabbitmq_data:
   db_volume:
+  redis_socket_cache:
+  redis_socket_session:
   shop_volume:
     driver_opts:
       type: none
